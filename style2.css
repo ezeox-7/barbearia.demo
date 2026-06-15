@@ -1,0 +1,141 @@
+header {
+    text-align: center;
+}
+
+main {
+    text-align: center;
+    margin-top: 60px;
+    flex: 1;
+}
+
+footer {
+    margin-top: auto;
+    text-align: center;
+    background-color: black;
+    color: aliceblue;
+    padding: 30px;
+}
+
+footer p {
+    margin: 8px 0;
+}
+
+body {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    margin: 0;
+    background-color: grey;
+}
+
+button, .botao {
+    margin: 10px;
+    border-radius: 20px;
+    height: 40px;
+    width: 120px;
+    background: linear-gradient(90deg, #222 60%, #444 100%);
+    color: #fff;
+    border: none;
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    transition: background 0.3s, transform 0.2s;
+}
+
+button:hover, .botao:hover {
+    background: linear-gradient(90deg, #444 60%, #222 100%);
+    color: #ffd700;
+    transform: scale(1.07);
+}
+
+form {
+    display: inline-block;
+    background: #222;
+    padding: 32px 24px;
+    border-radius: 16px;
+    box-shadow: 0 2px 16px rgba(0,0,0,0.10);
+    color: #fff;
+    margin-top: 24px;
+}
+
+label {
+    display: block;
+    margin: 12px 0 4px 0;
+    font-weight: bold;
+}
+
+input, select {
+    width: 200px;
+    padding: 8px;
+    border-radius: 8px;
+    border: none;
+    margin-bottom: 12px;
+    font-size: 1rem;
+}
+
+h1 {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    letter-spacing: 2px;
+    color: #222;
+    margin-bottom: 24px;
+}
+
+section p {
+    color: #222;
+    font-size: 1.1rem;
+    margin: 8px 0;
+}
+section p label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: normal;
+    margin: 0;
+}
+
+section p label input[type="checkbox"] {
+    width: auto;
+    margin-right: 10px;
+    margin-bottom: 0;
+    cursor: pointer;
+}
+
+header img {
+    border-radius: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    max-width: 220px;
+    margin-top: 16px;
+}
+
+/* Seção de serviços com alinhamento perfeito */
+#servicos-lista {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    margin: 20px 0;
+}
+
+#servicos-lista p {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    margin: 0;
+}
+
+#servicos-lista p label {
+    display: flex;
+    align-items: center;
+    white-space: nowrap;
+    font-weight: normal;
+    margin: 0;
+    gap: 10px;
+}
+
+#servicos-lista p label input[type="checkbox"] {
+    width: auto;
+    margin: 0;
+    cursor: pointer;
+    flex-shrink: 0;
+}

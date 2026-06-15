@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Serviços</title>
+    <link rel="stylesheet" href="style2.css">
+</head>
+<body>
+<header><img src="WhatsApp_Image_2026-06-01_at_14.44.22-removebg-preview.png" alt=""></header>
+<main>
+    <section><h1>Serviços</h1></section>
+
+    <section id="servicos-lista">
+        <p><label><input type="checkbox" class="servico-checkbox" data-servico="Corte" data-preco="30"> Corte de cabelo - R$ 30,00</label></p>
+        <p><label><input type="checkbox" class="servico-checkbox" data-servico="Barba" data-preco="20"> Barba - R$ 20,00</label></p>
+        <p><label><input type="checkbox" class="servico-checkbox" data-servico="Sobrancelha" data-preco="15"> Design de sobrancelhas - R$ 15,00</label></p>
+        <p><label><input type="checkbox" class="servico-checkbox" data-servico="Luzes" data-preco="50"> Luzes - R$ 50,00</label></p>
+        <p><label><input type="checkbox" class="servico-checkbox" data-servico="Hidratacao" data-preco="20"> Hidratação - R$ 20,00</label></p>
+        <p><label><input type="checkbox" class="servico-checkbox" data-servico="Progressiva" data-preco="80"> Progressiva - R$ 80,00</label></p>
+    </section>
+
+    <section id="orcamento-resultado" style="margin-top: 20px; display: none;">
+        <h2>Orçamento</h2>
+        <p id="valor-total" style="font-size: 1.2rem; color: #ffd700; font-weight: bold;">R$ 0,00</p>
+        <p id="duracao-total" style="color: #ffd700; font-weight: bold;">Duração: 0 min</p>
+        <p id="servicos-selecionados" style="color: #fff;"></p>
+    </section>
+
+    <nav style="margin-top: 20px;">
+        <button type="button" id="btn-calcular" class="botao">Confirmar</button>
+        <button type="button" id="btn-limpar" class="botao">Limpar</button>
+    </nav>
+
+    <hr style="margin: 24px 0;">
+<section>
+        <h2>Agendar com os serviços selecionados</h2>
+        <form id="form-servicos">
+            <label for="nome">Nome:</label>
+            <input type="text" id="nome" name="nome" required><br>
+
+            <label for="telefone">Telefone/WhatsApp:</label>
+            <input type="tel" id="telefone" name="telefone" required><br>
+
+            <label for="data">Data:</label>
+            <input type="date" id="data" name="data" required><br>
+
+            <label for="hora">Hora:</label>
+            <input type="time" id="hora" name="hora" required><br>
+
+            <input type="hidden" id="servicos-hidden" name="servicos">
+            <input type="hidden" id="total-hidden" name="total">
+
+            <button type="submit" id="btn-agendar" class="botao">Agendar</button>
+        </form>
+    </section>
+
+    <nav style="margin-top: 30px;">
+        <a href="index2.html"><button class="botao">Ver Agendamentos</button></a>
+        <a href="index.html"><button class="botao">Menu inicial</button></a>
+    </nav>
+</main>
+<footer>
+    <p style="margin-top: 15px; font-size: 0.8rem;">&copy; 2026 Barbearia. Todos os direitos reservados.</p>
+</footer>
+<script src="script.js"></script>
+</body>
+</html>

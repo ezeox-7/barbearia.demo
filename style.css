@@ -1,0 +1,50 @@
+header{
+ text-align: center;   
+ 
+}
+
+main{
+      text-align: center;
+    margin-top: 60px;
+    flex: 1;
+}
+
+footer{ 
+   margin-top: auto;
+   text-align: center;
+   background-color: black;
+   color: aliceblue;
+   padding: 30px;
+}
+
+footer p {
+   margin: 8px 0;
+}
+
+body{
+      min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    margin: 0;
+    background-color: grey;
+}
+
+.botao{
+    margin: 10px;
+    border-radius: 20px;
+    height: 40px;
+    width:120px;
+    background: linear-gradient(90deg, #222 60%, #444 100%);
+    color: #fff;
+    border: none;
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    transition: background 0.3s, transform 0.2s;
+}
+button:hover, .botao:hover {
+    background: linear-gradient(90deg, #444 60%, #222 100%);
+    color: #ffd700;
+    transform: scale(1.07);
+     }
