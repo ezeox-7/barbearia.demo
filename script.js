@@ -1,254 +1,35 @@
-// Global: durações e buffer
-const DURACOES = {
-    'Corte': 30,
-    'Barba': 15,
-    'Sobrancelha': 10,
-    'Luzes': 90,
-    'Hidratacao': 40,
-    'Progressiva': 120
-};
-const BUFFER_MIN = 15; // minutos de folga entre atendimentos
-
-function inferDuracaoFromLabels(labels) {
-    let minutos = 0;
-    labels.forEach(l => {
-        if (/corte/i.test(l)) minutos += DURACOES['Corte'] || 30;
-        else if (/barba/i.test(l)) minutos += DURACOES['Barba'] || 15;
-        else if (/sobrancelha/i.test(l)) minutos += DURACOES['Sobrancelha'] || 10;
-        else if (/luzes/i.test(l)) minutos += DURACOES['Luzes'] || 90;
-        else if (/hidrata/i.test(l) || /hidrataç/i.test(l)) minutos += DURACOES['Hidratacao'] || 40;
-        else if (/progressiva/i.test(l)) minutos += DURACOES['Progressiva'] || 120;
-        else minutos += 30;
+/* Projeto de demonstração: dados fictícios somente em localStorage. */
+(() => {
+  'use strict';
+  const KEY = 'barbearia-demo-v2';
+  const money = v => Number(v).toLocaleString('pt-BR', {style:'currency',currency:'BRL'});
+  const dateLabel = v => { const [y,m,d] = v.split('-'); return `${d}/${m}/${y}`; };
+  function load(){try {const a=JSON.parse(localStorage.getItem(KEY)||'[]');return Array.isArray(a)?a:[];}catch{return [];}}
+  function save(a){try{localStorage.setItem(KEY,JSON.stringify(a));return true;}catch{return false;}}
+  const boxes = [...document.querySelectorAll('.servico-checkbox')];
+  const total = document.getElementById('valor-total');
+  const duration = document.getElementById('duracao-total');
+  const calc = () => boxes.filter(x=>x.checked).reduce((a,x)=>({sum:a.sum+Number(x.dataset.preco),minutes:a.minutes+Number(x.dataset.minutos),names:[...a.names,x.value]}),{sum:0,minutes:0,names:[]});
+  function update(){const c=calc();if(total)total.textContent=money(c.sum);if(duration)duration.textContent=`Duração estimada: ${c.minutes} min`;}
+  boxes.forEach(x=>x.addEventListener('change',update));update();
+  const form = document.getElementById('form-servicos');
+  if(form){
+    const date=document.getElementById('data');date.min=new Date(Date.now()-new Date().getTimezoneOffset()*60000).toISOString().slice(0,10);
+    form.addEventListener('submit',e=>{
+      e.preventDefault();const feedback=document.getElementById('feedback');const c=calc();
+      const d=date.value,t=document.getElementById('hora').value;
+      const start=new Date(`${d}T${t}`);const end=new Date(start.getTime()+(c.minutes+15)*60000);
+      if(!c.names.length){feedback.textContent='Selecione ao menos um serviço.';return;}
+      if(!d||!t||!Number.isFinite(start.getTime())||start<=new Date()){feedback.textContent='Escolha um horário futuro.';return;}
+      const entries=load();const overlap=entries.some(a=>{const s=new Date(`${a.date}T${a.time}`);const f=new Date(s.getTime()+(Number(a.minutes)+15)*60000);return start<f&&s<end;});
+      if(overlap){feedback.textContent='Já existe uma simulação nesse intervalo neste navegador.';return;}
+      entries.push({id:String(Date.now())+'-'+Math.random().toString(36).slice(2,7),name:document.getElementById('nome').value.trim().slice(0,60),phone:document.getElementById('telefone').value.trim().slice(0,18),date:d,time:t,services:c.names,price:c.sum,minutes:c.minutes});
+      if(!save(entries)){feedback.textContent='Não foi possível salvar no navegador.';return;}
+      form.reset();boxes.forEach(x=>x.checked=false);update();feedback.textContent='Simulação salva neste navegador! Consulte a agenda de teste.';
     });
-    return minutos;
-}
-
-document.addEventListener('DOMContentLoaded', function() {
-// ===== PÁGINA DE SERVIÇOS (Orçamento + Agendamento) =====
-try {
-    const btnCalcular = document.getElementById('btn-calcular');
-    const btnLimpar = document.getElementById('btn-limpar');
-    const checkboxes = document.querySelectorAll('.servico-checkbox');
-    const orcamentoResultado = document.getElementById('orcamento-resultado');
-    const valorTotal = document.getElementById('valor-total');
-    const servicosSelecionados = document.getElementById('servicos-selecionados');
-
-    // Novo método: controlar botão Agendar diretamente
-    const btnAgendar = document.getElementById('btn-agendar');
-    function enableAgendar() { if (btnAgendar) btnAgendar.disabled = false; }
-    function disableAgendar() { if (btnAgendar) btnAgendar.disabled = true; }
-    if (btnAgendar) btnAgendar.disabled = true; // padrão: desabilitado
-
-    // exige clique em "Confirmar" antes de permitir agendar
-    let orcamentoConfirmado = false;
-
-    function calcularOrcamento() {
-        let total = 0;
-        let servicos = [];
-        checkboxes.forEach(cb => {
-            if (cb.checked) {
-                total += parseFloat(cb.getAttribute('data-preco')) || 0;
-                servicos.push(cb.parentElement.textContent.trim());
-            }
-        });
-        return { total, servicos };
-    }
-
-    function calcularDuracaoSelecionados() {
-        let minutos = 0;
-        checkboxes.forEach(cb => {
-            if (cb.checked) {
-                const key = cb.getAttribute('data-servico');
-                if (DURACOES[key]) minutos += DURACOES[key];
-            }
-        });
-        return minutos;
-    }
-
-    // handler nomeado para calcular (reutilizável)
-    function handleCalcularClick() {
-        const resultado = calcularOrcamento();
-        // bloquear quando nenhum serviço selecionado
-        if (!resultado.servicos || resultado.servicos.length === 0 || resultado.total === 0) {
-            alert('Selecione pelo menos um serviço antes de confirmar o orçamento!');
-            return;
-        }
-        const duracaoMinutos = calcularDuracaoSelecionados();
-        if (valorTotal) valorTotal.textContent = 'R$ ' + resultado.total.toFixed(2).replace('.', ',');
-        if (servicosSelecionados) servicosSelecionados.innerHTML = '<strong>Serviços selecionados:</strong><br>' + resultado.servicos.join('<br>');
-        if (orcamentoResultado) orcamentoResultado.style.display = 'block';
-        const duracaoTotalEl = document.getElementById('duracao-total'); if (duracaoTotalEl) duracaoTotalEl.textContent = 'Duração: ' + duracaoMinutos + ' min';
-        const servicosHidden = document.getElementById('servicos-hidden'); const totalHidden = document.getElementById('total-hidden');
-        if (servicosHidden && totalHidden) { servicosHidden.value = JSON.stringify(resultado.servicos); totalHidden.value = resultado.total; }
-        localStorage.setItem('orcamento', JSON.stringify({ total: resultado.total, servicos: resultado.servicos }));
-        // habilitar botão agendar apenas após confirmação
-        enableAgendar();
-    }
-
-    if (btnCalcular) {
-        btnCalcular.addEventListener('click', handleCalcularClick);
-    } else {
-        // fallback por delegação
-        document.addEventListener('click', function(e) {
-            const target = e.target.closest && e.target.closest('#btn-calcular');
-            if (target) handleCalcularClick();
-        });
-    }
-
-    if (btnLimpar) {
-        btnLimpar.addEventListener('click', function() {
-            checkboxes.forEach(cb => cb.checked = false);
-            if (orcamentoResultado) orcamentoResultado.style.display = 'none';
-            const duracaoTotalEl = document.getElementById('duracao-total'); if (duracaoTotalEl) duracaoTotalEl.textContent = 'Duração: 0 min';
-            const servicosHidden = document.getElementById('servicos-hidden'); const totalHidden = document.getElementById('total-hidden');
-            if (servicosHidden) servicosHidden.value = '';
-            if (totalHidden) totalHidden.value = '';
-            localStorage.removeItem('orcamento');
-            disableAgendar();
-        });
-    }
-
-    // invalidar confirmação se usuário alterar seleção após confirmar
-    checkboxes.forEach(cb => cb.addEventListener('change', function() { disableAgendar(); }));
-
-    // formulário de agendamento
-    const form = document.getElementById('form-servicos');
-
-    function handleFormSubmit(e) {
-        if (e) e.preventDefault();
-        // garantir confirmação via habilitação do botão
-        if (btnAgendar && btnAgendar.disabled) { alert('Por favor, confirme o orçamento antes de agendar.'); return; }
-        const nome = document.getElementById('nome').value.trim();
-        const telefone = document.getElementById('telefone').value.trim();
-        const data = document.getElementById('data').value;
-        const hora = document.getElementById('hora').value;
-        const servicosHiddenEl = document.getElementById('servicos-hidden');
-        const totalHiddenEl = document.getElementById('total-hidden');
-        let servicosHiddenVal = servicosHiddenEl ? servicosHiddenEl.value : '';
-        let totalHidden = totalHiddenEl ? (parseFloat(totalHiddenEl.value) || 0) : 0;
-
-        // se o usuário não clicou em "Confirmar", preencher a partir da seleção atual
-        if (!servicosHiddenVal || servicosHiddenVal.trim() === '' || totalHidden === 0) {
-            const resultadoInter = calcularOrcamento();
-            servicosHiddenVal = JSON.stringify(resultadoInter.servicos);
-            totalHidden = resultadoInter.total;
-            if (servicosHiddenEl) servicosHiddenEl.value = servicosHiddenVal;
-            if (totalHiddenEl) totalHiddenEl.value = totalHidden;
-        }
-
-        if (!nome) { alert('Por favor, digite seu nome!'); return; }
-        if (!telefone || telefone.length < 10) { alert('Por favor, digite um telefone válido!'); return; }
-        if (!data) { alert('Por favor, selecione uma data!'); return; }
-        if (!hora) { alert('Por favor, selecione um horário!'); return; }
-        const duracaoMinutos = calcularDuracaoSelecionados();
-        if (duracaoMinutos === 0) { alert('Selecione ao menos um serviço antes de agendar!'); return; }
-        const dataInicio = new Date(data + 'T' + hora);
-        if (isNaN(dataInicio.getTime()) || dataInicio <= new Date()) { alert('Selecione uma data futura!'); return; }
-        const duracaoTotalMin = duracaoMinutos + BUFFER_MIN;
-        const dataFim = new Date(dataInicio.getTime() + duracaoTotalMin * 60000);
-        let agendamentos = JSON.parse(localStorage.getItem('agendamentos')) || [];
-        const conflito = agendamentos.find(a => {
-            const inicioExist = a.inicioISO ? new Date(a.inicioISO) : new Date(a.data + 'T' + a.hora);
-            let fimExist;
-            if (a.fimISO) fimExist = new Date(a.fimISO);
-            else {
-                const durExist = (typeof a.duracao === 'number' && a.duracao > 0) ? a.duracao : inferDuracaoFromLabels(a.servicos || []);
-                fimExist = new Date(inicioExist.getTime() + (durExist + BUFFER_MIN) * 60000);
-            }
-            return (dataInicio < fimExist) && (inicioExist < dataFim);
-        });
-        if (conflito) { alert('Horário indisponível. Existe um agendamento conflitante:\n\n' + 'Nome: ' + conflito.nome + '\nData: ' + new Date(conflito.data).toLocaleDateString('pt-BR') + ' às ' + conflito.hora); return; }
-        const servicos = servicosHiddenVal ? JSON.parse(servicosHiddenVal) : [];
-        const agendamento = { id: Date.now(), nome, telefone, servicos, total: totalHidden, data, hora, duracao: duracaoMinutos, inicioISO: dataInicio.toISOString(), fimISO: dataFim.toISOString(), criadoEm: new Date().toLocaleString('pt-BR') };
-        agendamentos.push(agendamento);
-        localStorage.setItem('agendamentos', JSON.stringify(agendamentos));
-        alert('✓ Agendamento efetuado!\n\nNome: ' + nome + '\nServiços: ' + servicos.join(', ') + '\nTotal: R$ ' + agendamento.total.toFixed(2).replace('.', ',') + '\nData: ' + data.split('-').reverse().join('/') + '\nHora: ' + hora + '\nDuração: ' + duracaoMinutos + ' min');
-        if (form) form.reset(); checkboxes.forEach(cb => cb.checked = false); if (orcamentoResultado) orcamentoResultado.style.display = 'none';
-    }
-
-    if (form) {
-        form.addEventListener('submit', handleFormSubmit);
-    } else {
-        // fallback por delegação para botão de agendar
-        document.addEventListener('click', function(e) {
-            const target = e.target.closest && e.target.closest('#btn-agendar');
-            if (target) {
-                // tentar submeter formulário via delegação
-                const f = document.getElementById('form-servicos');
-                if (f) f.requestSubmit ? f.requestSubmit() : f.dispatchEvent(new Event('submit'));
-            }
-        });
-    }
-} catch (err) { console.error('Erro inicializando página de serviços:', err); }
-
-// ===== PÁGINA DE AGENDAMENTOS (listagem + remoção) =====
-try {
-    const lista = document.getElementById('lista-agendamentos');
-    if (lista) {
-        function renderizarAgendamentos() {
-            const agendamentos = JSON.parse(localStorage.getItem('agendamentos')) || [];
-            if (agendamentos.length === 0) { lista.innerHTML = '<p>Nenhum agendamento ainda.</p>'; return; }
-            lista.innerHTML = '';
-            agendamentos.forEach(a => {
-                const div = document.createElement('div');
-                div.className = 'agendamento-item';
-                const dur = a.duracao || inferDuracaoFromLabels(a.servicos || []);
-                div.innerHTML = `
-                    <p><strong>${a.nome}</strong> — ${new Date(a.data).toLocaleDateString('pt-BR')} às ${a.hora} (duração: ${dur} min)</p>
-                    <p>Serviços: ${a.servicos.join(', ')}</p>
-                    <p>Total: R$ ${a.total.toFixed(2).replace('.',',')}</p>
-                    <p style="font-size:0.8rem;color:#999">Agendado em: ${a.criadoEm}</p>
-                    <nav style="margin-top:8px;"><button class="botao btn-remover" data-id="${a.id}">Remover</button></nav>
-                    <div class="senha-prompt" style="display:none;margin-top:8px;">
-                        <input type="password" class="senha-input" placeholder="Senha para remover" style="padding:6px;border-radius:6px;border:none;margin-right:8px;">
-                        <button class="botao btn-confirm-remove" data-id="${a.id}">Confirmar</button>
-                        <button class="botao btn-cancel-remove">Cancelar</button>
-                    </div>
-                    <hr>
-                `;
-                lista.appendChild(div);
-            });
-
-            // mostrar prompt ao clicar em remover
-            lista.querySelectorAll('.btn-remover').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    const container = this.closest('.agendamento-item');
-                    const prompt = container.querySelector('.senha-prompt');
-                    if (prompt) prompt.style.display = 'block';
-                    const input = container.querySelector('.senha-input'); if (input) input.focus();
-                });
-            });
-
-            // cancelar remoção
-            lista.querySelectorAll('.btn-cancel-remove').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    const container = this.closest('.agendamento-item');
-                    const prompt = container.querySelector('.senha-prompt');
-                    if (prompt) prompt.style.display = 'none';
-                });
-            });
-
-            // confirmar remoção — exige senha '123'
-            lista.querySelectorAll('.btn-confirm-remove').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    const id = parseInt(this.getAttribute('data-id'));
-                    const container = this.closest('.agendamento-item');
-                    const input = container.querySelector('.senha-input');
-                    const senha = input ? input.value : '';
-                    if (senha === '123') {
-                        let agendamentos = JSON.parse(localStorage.getItem('agendamentos')) || [];
-                        agendamentos = agendamentos.filter(x => x.id !== id);
-                        localStorage.setItem('agendamentos', JSON.stringify(agendamentos));
-                        renderizarAgendamentos();
-                    } else {
-                        alert('Senha incorreta!');
-                        if (input) { input.value = ''; input.focus(); }
-                    }
-                });
-            });
-        }
-        renderizarAgendamentos();
-    }
-} catch (err) { console.error('Erro renderizando agendamentos:', err); }
-
-});
+  }
+  const list=document.getElementById('lista-agendamentos');
+  function render(){if(!list)return;list.replaceChildren();const entries=load().sort((a,b)=>(a.date+'T'+a.time).localeCompare(b.date+'T'+b.time));if(!entries.length){const p=document.createElement('p');p.className='empty';p.textContent='Nenhuma simulação cadastrada neste navegador.';list.append(p);return;}
+    entries.forEach(a=>{const item=document.createElement('article');item.className='agenda-item';const info=document.createElement('div');const heading=document.createElement('h3');heading.textContent=a.name;const detail=document.createElement('p');detail.textContent=`${dateLabel(a.date)} às ${a.time} · ${a.minutes} min`;const sv=document.createElement('p');sv.textContent=Array.isArray(a.services)?a.services.join(' · '):'';const val=document.createElement('p');val.textContent=`Total estimado: ${money(a.price)}`;info.append(heading,detail,sv,val);const remove=document.createElement('button');remove.className='btn secondary small';remove.type='button';remove.textContent='Excluir';remove.addEventListener('click',()=>{if(confirm('Excluir esta simulação?')){save(load().filter(x=>x.id!==a.id));render();}});item.append(info,remove);list.append(item);});}
+  render();document.getElementById('limpar-agenda')?.addEventListener('click',()=>{if(confirm('Excluir todas as simulações deste navegador?')){save([]);render();}});
+})();
